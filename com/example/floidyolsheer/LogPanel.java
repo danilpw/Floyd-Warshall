@@ -61,21 +61,7 @@ public class LogPanel extends VBox {
         logArea.clear();
     }
 
-    public void setCurrentStep(int step) {
-        addLogMessage("Текущий шаг: " + step);
-    }
-
     public void setCurrentVertex(String vertex) {
         addLogMessage("Текущая вершина: " + vertex);
-    }
-
-    public void setPathCheck(String from, String to, String via, int dist1, int dist2, int current) {
-        addLogMessage("Проверяется путь: " + from + " → " + via + " → " + to);
-        addLogMessage("dist(" + from + ", " + via + ") + dist(" + via + ", " + to + ") = " +
-                dist1 + " + " + dist2 + " < " + current);
-    }
-
-    public void setNewDistance(int value) {
-        addLogMessage("Новое расстояние: " + value);
     }
 }

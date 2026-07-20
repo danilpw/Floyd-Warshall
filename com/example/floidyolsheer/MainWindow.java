@@ -28,14 +28,14 @@ public class MainWindow extends Application {
         logPanel = new LogPanel();
 
         root.setTop(controlPanel);
-        
+
         ScrollPane graphScroll = new ScrollPane(graphEditor);
         graphScroll.setFitToWidth(true);
         graphScroll.setFitToHeight(true);
         graphScroll.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         graphScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         graphScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        
+
         root.setCenter(graphScroll);
         root.setRight(matrixPanel);
         root.setBottom(logPanel);
@@ -43,16 +43,29 @@ public class MainWindow extends Application {
         matrixPanel.setMinWidth(450);
         matrixPanel.setMaxWidth(450);
 
+        controller.setOwner(primaryStage);
+
         Scene scene = new Scene(root, 1400, 900);
         primaryStage.setTitle("Floyd-Warshall Algorithm");
         primaryStage.setScene(scene);
+        primaryStage.setMinWidth(1000);
+        primaryStage.setMinHeight(700);
         primaryStage.setMaximized(true);
         primaryStage.show();
 
         controller.setGraphEditor(graphEditor);
         controller.setMatrixPanel(matrixPanel);
         controller.setLogPanel(logPanel);
-        controller.initDemoData();
+
+        graphEditor.setOnGraphChangedListener(() -> {
+            if (!controller.isAlgorithmExecuted() && !controller.isAnimating()) {
+                matrixPanel.updateFromGraph(graphEditor.getGraph());
+            }
+        });
+
+        matrixPanel.updateFromGraph(graphEditor.getGraph());
+
+        graphEditor.setMode(EditorMode.ADD_VERTEX);
     }
 
     public static void main(String[] args) {

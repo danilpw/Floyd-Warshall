@@ -15,6 +15,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import java.util.List;
+
 public class MatrixPanel extends VBox {
 
     private static final int CELL_WIDTH = 50;
@@ -49,8 +51,11 @@ public class MatrixPanel extends VBox {
         Label title = new Label("Матрица расстояний");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         title.setStyle("-fx-text-fill: white;");
+        title.setAlignment(Pos.CENTER);
 
-        initDemoMatrix();
+        size = 0;
+        distanceMatrix = new int[0][0];
+        vertexNames = new String[0];
 
         topHeaders = new GridPane();
         topHeaders.setHgap(GAP);
@@ -63,10 +68,6 @@ public class MatrixPanel extends VBox {
         matrixGrid = new GridPane();
         matrixGrid.setHgap(GAP);
         matrixGrid.setVgap(GAP);
-
-        drawHeaders();
-        drawMatrix();
-
 
         matrixScroll = new ScrollPane(matrixGrid);
         matrixScroll.setPrefViewportWidth(VIEW_SIZE);
@@ -99,23 +100,29 @@ public class MatrixPanel extends VBox {
         );
 
         GridPane body = new GridPane();
+        body.setAlignment(Pos.CENTER);
         body.add(corner, 0, 0);
         body.add(topHeaderViewport, 1, 0);
         body.add(leftHeaderViewport, 0, 1);
         body.add(matrixScroll, 1, 1);
 
-        getChildren().addAll(title, body);
+        VBox bodyWrapper = new VBox(body);
+        bodyWrapper.setAlignment(Pos.CENTER);
+
+        getChildren().addAll(title, bodyWrapper);
 
         syncHeaderPositions();
     }
 
     private Pane createClippedViewport(Node content, double width, double height) {
         Pane viewport = new Pane(content);
-        viewport.setMinSize(width, height);
+        viewport.setMinSize(0, 0);
         viewport.setPrefSize(width, height);
         viewport.setMaxSize(width, height);
 
         Rectangle clip = new Rectangle(width, height);
+        clip.widthProperty().bind(viewport.widthProperty());
+        clip.heightProperty().bind(viewport.heightProperty());
         viewport.setClip(clip);
 
         return viewport;
@@ -180,24 +187,6 @@ public class MatrixPanel extends VBox {
         }
     }
 
-    private void initDemoMatrix() {
-        size = 7;
-        vertexNames = new String[size];
-        for (int i = 0; i < size; i++) {
-            vertexNames[i] = String.valueOf(i + 1);
-        }
-
-        distanceMatrix = new int[][] {
-                { 0,   4,   8, 999,   9, 999, 999 },
-                { 4,   0,   5,   7, 999, 999,  10 },
-                { 8,   5,   0,   6, 999, 999,   6 },
-                { 999, 7,   6,   0, 999,   4,   2 },
-                { 9, 999, 999, 999,   0,   3, 999 },
-                { 999,999,999,   4,   3,   0, 999 },
-                { 999, 10,   6,   2, 999, 999,   0 }
-        };
-    }
-
     private void drawHeaders() {
         for (int i = 0; i < size; i++) {
             Label top = createHeader(vertexNames[i]);
@@ -210,6 +199,8 @@ public class MatrixPanel extends VBox {
 
     public void drawMatrix() {
         matrixGrid.getChildren().clear();
+        if (size == 0) return;
+
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 Label cell = createCell(distanceMatrix[i][j]);
@@ -251,19 +242,114 @@ public class MatrixPanel extends VBox {
         return cell;
     }
 
-    public void updateCell(int row, int col, int value) {
+    public void highlightCell(int row, int col) {
+        highlightCell(row, col, "#ff6b6b");
+    }
+
+    public void highlightCell(int row, int col, String color) {
+        clearHighlight();
+
         if (row >= 0 && row < size && col >= 0 && col < size) {
-            distanceMatrix[row][col] = value;
-            drawMatrix();
-            syncHeaderPositions();
+            for (javafx.scene.Node node : matrixGrid.getChildren()) {
+                Integer rowIndex = GridPane.getRowIndex(node);
+                Integer colIndex = GridPane.getColumnIndex(node);
+                if (rowIndex != null && colIndex != null &&
+                        rowIndex == row && colIndex == col && node instanceof Label) {
+                    Label cell = (Label) node;
+                    cell.setStyle(
+                            "-fx-background-color: " + color + ";" +
+                                    "-fx-border-color: #b8d4e8;" +
+                                    "-fx-border-width: 1;" +
+                                    "-fx-border-radius: 4;" +
+                                    "-fx-background-radius: 4;" +
+                                    "-fx-text-fill: white;" +
+                                    "-fx-font-weight: bold;"
+                    );
+                    break;
+                }
+            }
         }
     }
 
-    public void highlightCell(int row, int col) {
-        // Заглушка
+    public void clearHighlight() {
+        for (javafx.scene.Node node : matrixGrid.getChildren()) {
+            if (node instanceof Label) {
+                Label cell = (Label) node;
+                cell.setStyle(
+                        "-fx-background-color: #e3f0f7;" +
+                                "-fx-border-color: #b8d4e8;" +
+                                "-fx-border-width: 1;" +
+                                "-fx-border-radius: 4;" +
+                                "-fx-background-radius: 4;"
+                );
+            }
+        }
     }
 
-    public void clearHighlight() {
-        // Заглушка
+    public void updateMatrix(double[][] newMatrix) {
+        if (newMatrix == null || newMatrix.length == 0) {
+            size = 0;
+            distanceMatrix = new int[0][0];
+            vertexNames = new String[0];
+            topHeaders.getChildren().clear();
+            leftHeaders.getChildren().clear();
+            drawMatrix();
+            syncHeaderPositions();
+            return;
+        }
+
+        size = newMatrix.length;
+        distanceMatrix = new int[size][size];
+        vertexNames = new String[size];
+
+        for (int i = 0; i < size; i++) {
+            vertexNames[i] = String.valueOf(i + 1);
+            for (int j = 0; j < size; j++) {
+                if (Double.isInfinite(newMatrix[i][j])) {
+                    distanceMatrix[i][j] = 999;
+                } else {
+                    distanceMatrix[i][j] = (int) Math.round(newMatrix[i][j]);
+                }
+            }
+        }
+
+        topHeaders.getChildren().clear();
+        leftHeaders.getChildren().clear();
+        drawHeaders();
+        drawMatrix();
+        syncHeaderPositions();
+    }
+
+    public void updateFromGraph(Graph graph) {
+        if (graph == null || graph.getVertexCount() == 0) {
+            updateMatrix(null);
+            return;
+        }
+
+        List<Vertex> vertices = graph.getVertices();
+        size = vertices.size();
+        distanceMatrix = new int[size][size];
+        vertexNames = new String[size];
+
+        for (int i = 0; i < size; i++) {
+            vertexNames[i] = vertices.get(i).getName();
+        }
+
+        double[][] matrix = graph.getAdjacencyMatrix();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (Double.isInfinite(matrix[i][j])) {
+                    distanceMatrix[i][j] = 999;
+                } else {
+                    distanceMatrix[i][j] = (int) Math.round(matrix[i][j]);
+                }
+            }
+        }
+
+        topHeaders.getChildren().clear();
+        leftHeaders.getChildren().clear();
+        drawHeaders();
+        drawMatrix();
+        syncHeaderPositions();
     }
 }

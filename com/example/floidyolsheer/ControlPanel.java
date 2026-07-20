@@ -3,7 +3,7 @@ package com.example.floidyolsheer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
 public class ControlPanel extends VBox {
@@ -28,13 +28,13 @@ public class ControlPanel extends VBox {
         setAlignment(Pos.CENTER);
         setStyle("-fx-background-color: #85C2DE; -fx-border-color: #ffffff; -fx-border-width: 2;");
 
-        HBox buttonBox = new HBox(70);
+        FlowPane buttonBox = new FlowPane(12, 10);
         buttonBox.setAlignment(Pos.CENTER);
 
         loadButton = createButton("Загрузить", "#53A0CF");
         saveButton = createButton("Сохранить", "#53A0CF");
         startButton = createButton("Старт", "#53A0CF");
-        nextButton = createButton("Шаг вперед", "#53A0CF");
+        nextButton = createButton("Шаг вперёд", "#53A0CF");
         previousButton = createButton("Шаг назад", "#53A0CF");
         resetButton = createButton("Сброс", "#53A0CF");
         authorsButton = createButton("О разработчиках", "#53A0CF");
@@ -61,23 +61,13 @@ public class ControlPanel extends VBox {
                 "-fx-background-color: " + color + ";" +
                         "-fx-text-fill: white;" +
                         "-fx-font-weight: bold;" +
-                        "-fx-padding: 12 25 12 25;" +
-                        "-fx-font-size: 16px;" +
+                        "-fx-padding: 10 16 10 16;" +
+                        "-fx-font-size: 15px;" +
                         "-fx-background-radius: 5;" +
                         "-fx-border-width: 0;" +
                         "-fx-focus-color: transparent;" +
                         "-fx-faint-focus-color: transparent;"
         );
         return button;
-    }
-
-    public void setButtonsEnabled(boolean enabled) {
-        loadButton.setDisable(!enabled);
-        saveButton.setDisable(!enabled);
-        startButton.setDisable(!enabled);
-        nextButton.setDisable(!enabled);
-        previousButton.setDisable(!enabled);
-        resetButton.setDisable(!enabled);
-        authorsButton.setDisable(!enabled);
     }
 }
